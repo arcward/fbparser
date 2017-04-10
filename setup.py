@@ -14,7 +14,7 @@ setup(
     author_email="git@edward.sh",
     description=("Library/CLI utility to parse, organize and "
                  "export messages in Facebook archives"),
-    long_description=read('README.md'),
+    long_description=read('README.rst'),
     keywords="facebook fb message messages archive parser parsing export",
     classifiers=[
         "License :: OSI Approved :: MIT License",
