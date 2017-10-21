@@ -156,7 +156,7 @@ class MessageArchive:
         
         :return: List of threads
         """
-        if self._threads is not None:
+        if self._threads:
             return self._threads
 
         # Read in threads 'as-is'
@@ -288,8 +288,8 @@ class MessageArchive:
         
         HTML looks like::
             <div class="message_header">
-                    <span class="user">Sender's name</span>
-                    <span class="meta">Monday, August 10, 2015 at 10:40pm EDT</span>
+                <span class="user">Sender's name</span>
+                <span class="meta">Monday, August 10, 2015 at 10:40pm EDT</span>
             </div>
         
         :param message_tree: 
@@ -339,11 +339,13 @@ class Thread:
         path = self.__file_path('csv', directory)
         with open(path, self.__mode(path), encoding=encoding) as csv_file:
             # lineterminator='\n' avoids Windows skipping every other row
-            cwriter = csv.writer(csv_file,
-                                 delimiter=',',
-                                 quotechar="\"",
-                                 quoting=csv.QUOTE_MINIMAL,
-                                 lineterminator='\n')
+            cwriter = csv.writer(
+                csv_file,
+                delimiter=',',
+                quotechar="\"",
+                quoting=csv.QUOTE_MINIMAL,
+                lineterminator='\n'
+            )
             for m in self.messages:
                 cwriter.writerow([m.timestamp, m.user, m.text])
 
@@ -356,7 +358,7 @@ class Thread:
         """
         path = self.__file_path('txt', directory)
         header = "Thread: {}\nParticipants: {}\n{}"
-        border = ''.join(["-" for r in range(0, 80)])
+        border = ''.join(["-" for _ in range(0, 80)])
         with open(path, self.__mode(path), encoding=encoding) as txt_file:
             txt_file.write(
                 header.format(self.title, ', '.join(self.participants), border)
@@ -380,7 +382,7 @@ class Thread:
         
         :return: 
         """
-        border = ''.join(["-" for r in range(0, 80)])
+        border = ''.join(["-" for _ in range(0, 80)])
         print(border)
         print("Thread:       {}\n"
               "Participants: {}\n\n"
@@ -468,8 +470,10 @@ class Thread:
         """
         d = self.__dict__()
         for m in d['messages']:
-            m['timestamp'] = datetime\
-                .strftime(m['timestamp'], _Message.timestamp_format)
+            m['timestamp'] = datetime.strftime(
+                m['timestamp'],
+                _Message.timestamp_format
+            )
         return json.dumps(d, indent=4, sort_keys=True)
 
     def __dict__(self):
@@ -499,9 +503,11 @@ class _Message:
     @property
     def complete(self):
         """Returns *True* if all data needed is accounted for"""
-        return (self.user is not None and
-                self.timestamp is not None and
-                self._text is not None)
+        return (
+            self.user is not None
+            and self.timestamp is not None
+            and self._text is not None
+        )
 
     @property
     def metadata(self):
@@ -538,8 +544,10 @@ class _Message:
     def json(self):
         """Return a JSON string representing the message"""
         return json.dumps({
-            'timestamp': datetime.strftime(self.timestamp,
-                                           self.timestamp_format),
+            'timestamp': datetime.strftime(
+                self.timestamp,
+                self.timestamp_format
+            ),
             'user': self.user,
             'text': self.text
         }, indent=4, sort_keys=True)
@@ -590,29 +598,49 @@ def replacements(file_path):
     return d
 
 
-def command_line():
+def main():
     prog = "FBParser"
     description = "Convert Facebook message archive"
-    parser = argparse.ArgumentParser(description=description)
+    parser = argparse.ArgumentParser(prog=prog, description=description)
     parser.add_argument(dest='input', help="messages.htm file")
-    parser.add_argument('--dir', default='fbparser_out',
-                        help="Directory for exports (default: fbparser_out/)")
     parser.add_argument('--csv', action='store_true', help="Export to CSV")
     parser.add_argument('--text', action='store_true', help="Export to TXT")
     parser.add_argument('--json', action='store_true', help="Export to JSON")
-    parser.add_argument('--stdout', action='store_true',
-                        help="Print threads to console")
-    parser.add_argument('--uid', default=None,
-                        help="Your Facebook UID (also replaced by --name)")
-    parser.add_argument('--name', default=None,
-                        help="Your Facebook name (will also replace UID)")
-    parser.add_argument('--replace', default=None,
-                        help="INI file with replacement names")
-    parser.add_argument('--encoding', default='utf-8',
-                        help="Output encoding (default: UTF-8)")
-    parser.add_argument('--sanitize', action='store_true',
-                        help="Strip invalid characters (creates backup of "
-                             "original archive)")
+    parser.add_argument(
+        '--dir',
+        default='fbparser_out',
+        help="Directory for exports (default: fbparser_out/)"
+    )
+    parser.add_argument(
+        '--stdout',
+        action='store_true',
+        help="Print threads to console"
+    )
+    parser.add_argument(
+        '--uid',
+        default=None,
+        help="Your Facebook UID (also replaced by --name)"
+    )
+    parser.add_argument(
+        '--name',
+        default=None,
+        help="Your Facebook name (will also replace UID)"
+    )
+    parser.add_argument(
+        '--replace',
+        default=None,
+        help="INI file with replacement names"
+    )
+    parser.add_argument(
+        '--encoding',
+        default='utf-8',
+        help="Output encoding (default: UTF-8)"
+    )
+    parser.add_argument(
+        '--sanitize',
+        action='store_true',
+        help="Strip invalid characters (creates backup of original archive)"
+    )
     args = parser.parse_args()
     # Hard stop for missing input file
     if not os.path.exists(args.input):
@@ -624,10 +652,14 @@ def command_line():
         replacement_names = replacements(args.replace)
 
     # Start/read in threads
-    msg_archive = MessageArchive(args.input, args.uid, args.name,
-                                 replacement_names=replacement_names,
-                                 encoding=args.encoding,
-                                 sanitize_xml=args.sanitize)
+    msg_archive = MessageArchive(
+        args.input,
+        args.uid,
+        args.name,
+        replacement_names=replacement_names,
+        encoding=args.encoding,
+        sanitize_xml=args.sanitize
+    )
     threads = msg_archive.threads
 
     # Start doing things
@@ -643,13 +675,4 @@ def command_line():
 
 
 if __name__ == '__main__':
-    rplc_test = replacements('resources/replace.ini')
-    archive = 'resources/messages2.htm'
-    uid = "501029017"
-    n = "Edward Wells"
-    arch = MessageArchive(archive, my_uid=uid, my_name=n,
-                          replacement_names=rplc_test)
-    thrs = arch.threads
-    print('')
-    arch.write(export_format='txt')
-
+    main()
